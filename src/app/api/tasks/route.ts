@@ -44,18 +44,39 @@ export async function GET() {
 // POST - Yeni task oluştur
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST request received');
+    
     const session = await getServerSession(authOptions);
+    console.log('Session check:', !!session?.user?.id);
     
     if (!session?.user?.id) {
+      console.log('Unauthorized: No session');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const { title, description, priority = 'medium', category = 'general' } = await request.json();
+    const body = await request.json();
+    console.log('Request body:', body);
+    
+    const { 
+      title, 
+      description, 
+      priority = 'medium',
+      category = 'general',
+      dueDate,
+      tags,
+      difficulty = 'medium',
+      notes,
+      isRecurring = false,
+      recurringPattern,
+      order = 0,
+      templateSubtasks
+    } = body;
 
-    if (!title || !description) {
+    if (!title?.trim() || !description?.trim()) {
+      console.log('Missing required fields');
       return NextResponse.json(
         { error: 'Title and description are required' },
         { status: 400 }
@@ -63,31 +84,51 @@ export async function POST(request: NextRequest) {
     }
 
     await dbConnect();
-    const task = await Task.create({
-      title,
-      description,
+    console.log('DB connected');
+    
+    // Create the task data
+    const taskData = {
+      title: title.trim(),
+      description: description.trim(),
+      userId: session.user.id,
       priority,
       category,
-      userId: session.user.id,
-      status: 'pending',
-      subtasks: [],
-      pomodoroCount: 0,
-      timeSpent: 0
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags: Array.isArray(tags) ? tags : [],
+      difficulty,
+      notes: notes?.trim() || '',
+      isRecurring,
+      recurringPattern: isRecurring ? recurringPattern : undefined,
+      order,
+      subtasks: [] as any[]
+    };
+
+    // Add template subtasks if provided
+    if (templateSubtasks && Array.isArray(templateSubtasks)) {
+      taskData.subtasks = templateSubtasks.map((subtaskTitle: string, index: number) => ({
+        title: subtaskTitle,
+        completed: false,
+        order: index,
+        pomodoroCount: 0,
+        timeSpent: 0,
+      }));
+    }
+
+    console.log('Creating task:', taskData);
+    const task = new Task(taskData);
+    const savedTask = await task.save();
+    console.log('Task saved successfully');
+
+    const taskWithVirtuals = savedTask.toObject({ virtuals: true });
+    
+    return NextResponse.json({ 
+      message: 'Task created successfully',
+      task: taskWithVirtuals 
     });
-
-    const taskWithVirtuals = task.toObject({ virtuals: true });
-
-    return NextResponse.json(
-      { 
-        message: 'Task created successfully',
-        task: taskWithVirtuals 
-      },
-      { status: 201 }
-    );
   } catch (error) {
     console.error('Create task error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     );
   }

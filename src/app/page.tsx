@@ -7,6 +7,23 @@ import TaskCard from '@/components/TaskCard';
 import TaskForm from '@/components/TaskForm';
 import Link from 'next/link';
 import { Task } from '@/types/task';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 
 export default function HomePage() {
   const { data: session, status } = useSession();
@@ -18,8 +35,21 @@ export default function HomePage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
   const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'created' | 'alphabetical'>('created');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'created' | 'alphabetical' | 'order'>('order');
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Drag and Drop sensors - optimized for mobile
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Minimum distance to start dragging
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
 
   // Fetch tasks
   const fetchTasks = async () => {
@@ -55,7 +85,10 @@ export default function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          order: tasks.length, // Add order field
+        }),
       });
 
       if (response.ok) {
@@ -169,12 +202,6 @@ export default function HomePage() {
   // Filter and sort tasks
   const getFilteredAndSortedTasks = () => {
     let filteredTasks = tasks.filter(task => {
-      // Search filter
-      const matchesSearch = searchTerm === '' || 
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.tags && task.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
-
       // Status filter
       const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
 
@@ -184,7 +211,7 @@ export default function HomePage() {
       // Category filter
       const matchesCategory = filterCategory === 'all' || task.category === filterCategory;
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+      return matchesStatus && matchesPriority && matchesCategory;
     });
 
     // Sort tasks
@@ -204,8 +231,11 @@ export default function HomePage() {
           return a.title.localeCompare(b.title);
         
         case 'created':
-        default:
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        
+        case 'order':
+        default:
+          return (a.order || 0) - (b.order || 0);
       }
     });
 
@@ -217,6 +247,64 @@ export default function HomePage() {
     const categories = tasks.map(task => task.category).filter(Boolean);
     return [...new Set(categories)];
   };
+
+  // Drag and Drop handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const filteredTasks = getFilteredAndSortedTasks();
+    const oldIndex = filteredTasks.findIndex(task => task._id === active.id);
+    const newIndex = filteredTasks.findIndex(task => task._id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistically update the UI
+    const newOrder = arrayMove(filteredTasks, oldIndex, newIndex);
+    
+    // Update the order in original tasks array
+    const updatedTasks = tasks.map(task => {
+      const orderIndex = newOrder.findIndex(t => t._id === task._id);
+      if (orderIndex !== -1) {
+        return { ...task, order: orderIndex };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+
+    // Update order in backend
+    try {
+      const updatePromises = newOrder.map((task, index) => 
+        fetch(`/api/tasks/${task._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: index }),
+        })
+      );
+      
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Failed to update task order:', error);
+      // Revert on error
+      fetchTasks();
+    }
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+
+  // Get the active task for drag overlay
+  const activeTask = activeId ? tasks.find(task => task._id === activeId) : null;
 
   return (
     <>
@@ -292,7 +380,7 @@ export default function HomePage() {
                 dueDate: editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().slice(0, 16) : undefined,
                 tags: editingTask.tags,
                 difficulty: editingTask.difficulty,
-                estimatedTime: editingTask.estimatedTime,
+
                 notes: editingTask.notes,
                 isRecurring: editingTask.isRecurring,
                 recurringPattern: editingTask.recurringPattern
@@ -328,27 +416,8 @@ export default function HomePage() {
                 marginBottom: '1rem',
                 fontSize: '1.2rem'
               }}>
-                🔍 Filters & Search
+                ⌬ Filters
               </h3>
-              
-              {/* Search Bar */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <input
-                  type="text"
-                  placeholder="🔍 Search tasks, descriptions, or tags..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid rgba(102, 126, 234, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: 'var(--text-primary)',
-                    fontSize: '1rem'
-                  }}
-                />
-              </div>
 
               {/* Filter Controls */}
               <div style={{ 
@@ -365,7 +434,7 @@ export default function HomePage() {
                     fontSize: '0.9rem',
                     fontWeight: 'bold'
                   }}>
-                    📊 Status
+                    ◆ Status
                   </label>
                   <select
                     value={filterStatus}
@@ -395,7 +464,7 @@ export default function HomePage() {
                     fontSize: '0.9rem',
                     fontWeight: 'bold'
                   }}>
-                    ⚡ Priority
+                    ◇ Priority
                   </label>
                   <select
                     value={filterPriority}
@@ -425,7 +494,7 @@ export default function HomePage() {
                     fontSize: '0.9rem',
                     fontWeight: 'bold'
                   }}>
-                    📂 Category
+                    ◈ Category
                   </label>
                   <select
                     value={filterCategory}
@@ -457,7 +526,7 @@ export default function HomePage() {
                     fontSize: '0.9rem',
                     fontWeight: 'bold'
                   }}>
-                    🔀 Sort By
+                    ⟷ Sort By
                   </label>
                   <select
                     value={sortBy}
@@ -471,6 +540,7 @@ export default function HomePage() {
                       color: 'var(--text-primary)'
                     }}
                   >
+                    <option value="order">↕ Custom Order (Drag & Drop)</option>
                     <option value="created">📅 Date Created</option>
                     <option value="dueDate">⏰ Due Date</option>
                     <option value="priority">⚡ Priority</option>
@@ -481,17 +551,29 @@ export default function HomePage() {
             </div>
 
             <div className="tasks-grid">
-              <h2 style={{ 
-                background: 'var(--primary-gradient)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '1.5rem',
-                fontSize: '1.8rem',
-                gridColumn: '1 / -1'
-              }}>
-                Your Tasks ({getFilteredAndSortedTasks().length} of {tasks.length})
-              </h2>
+              <div style={{ gridColumn: '1 / -1', marginBottom: '1.5rem' }}>
+                <h2 style={{ 
+                  background: 'var(--primary-gradient)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  marginBottom: '0.5rem',
+                  fontSize: '1.8rem'
+                }}>
+                  Your Tasks ({getFilteredAndSortedTasks().length} of {tasks.length})
+                </h2>
+                
+                {sortBy === 'order' && tasks.length > 1 && (
+                  <p style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.9rem',
+                    fontStyle: 'italic',
+                    margin: 0
+                  }}>
+                                         ↕ Drag the grip handles (≡) to reorder your tasks
+                  </p>
+                )}
+              </div>
 
               {isLoading ? (
                 <div className="loading">Loading tasks...</div>
@@ -522,7 +604,6 @@ export default function HomePage() {
                   </p>
                   <button
                     onClick={() => {
-                      setSearchTerm('');
                       setFilterStatus('all');
                       setFilterPriority('all');
                       setFilterCategory('all');
@@ -534,24 +615,54 @@ export default function HomePage() {
                   </button>
                 </div>
               ) : (
-                <>
-                  {getFilteredAndSortedTasks().map((task) => (
-                    <TaskCard
-                      key={task._id}
-                      task={task}
-                      onEdit={handleEditTask}
-                      onDelete={handleDeleteTask}
-                      onToggleStatus={handleToggleStatus}
-                      onUpdateTask={(updatedTask) => {
-                        setTasks(prev => 
-                          prev.map(t => 
-                            t._id === updatedTask._id ? updatedTask : t
-                          )
-                        );
-                      }}
-                    />
-                  ))}
-                </>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragCancel={handleDragCancel}
+                >
+                  <SortableContext
+                    items={getFilteredAndSortedTasks().map(task => task._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {getFilteredAndSortedTasks().map((task) => (
+                      <TaskCard
+                        key={task._id}
+                        task={task}
+                        onEdit={handleEditTask}
+                        onDelete={handleDeleteTask}
+                        onToggleStatus={handleToggleStatus}
+                        onUpdateTask={(updatedTask) => {
+                          setTasks(prev => 
+                            prev.map(t => 
+                              t._id === updatedTask._id ? updatedTask : t
+                            )
+                          );
+                        }}
+                      />
+                    ))}
+                  </SortableContext>
+                  
+                  {/* Drag Overlay */}
+                  <DragOverlay>
+                    {activeTask ? (
+                      <div style={{
+                        transform: 'rotate(5deg)',
+                        opacity: 0.9,
+                        cursor: 'grabbing'
+                      }}>
+                        <TaskCard
+                          task={activeTask}
+                          onEdit={() => {}}
+                          onDelete={() => {}}
+                          onToggleStatus={() => {}}
+                          onUpdateTask={() => {}}
+                        />
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               )}
             </div>
           </div>

@@ -27,7 +27,7 @@ export interface Task {
   completionPercentage: number;
   tags?: string[];
   notes?: string;
-  estimatedTime?: number; // estimated minutes to complete
+
   difficulty?: 'easy' | 'medium' | 'hard';
   isRecurring?: boolean;
   recurringPattern?: 'daily' | 'weekly' | 'monthly';

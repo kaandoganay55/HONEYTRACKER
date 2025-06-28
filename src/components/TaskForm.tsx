@@ -20,7 +20,7 @@ interface TaskFormData {
   dueDate?: string;
   tags?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
-  estimatedTime?: number;
+
   notes?: string;
   isRecurring?: boolean;
   recurringPattern?: 'daily' | 'weekly' | 'monthly';
@@ -33,6 +33,111 @@ interface UpdatedTaskFormProps {
   isEdit?: boolean;
 }
 
+const TASK_TEMPLATES = {
+  dailyRoutine: {
+    title: "Daily Morning Routine",
+    description: "Complete your daily morning activities",
+    priority: 'medium' as const,
+    category: 'personal',
+    difficulty: 'easy' as const,
+    tags: ['daily', 'routine', 'morning'],
+    subtasks: [
+      "Wake up and stretch",
+      "Drink a glass of water",
+      "Make the bed",
+      "Brush teeth",
+      "Take a shower",
+      "Have a healthy breakfast",
+      "Check today's schedule"
+    ]
+  },
+  workProject: {
+    title: "New Work Project",
+    description: "Project planning and execution template",
+    priority: 'high' as const,
+    category: 'work',
+    difficulty: 'medium' as const,
+    tags: ['project', 'work', 'planning'],
+    subtasks: [
+      "Define project scope and goals",
+      "Research and gather requirements",
+      "Create project timeline",
+      "Identify resources needed",
+      "Set up project structure",
+      "Create initial documentation",
+      "Schedule team meetings"
+    ]
+  },
+  workoutPlan: {
+    title: "Weekly Workout Plan",
+    description: "Stay fit with a structured workout routine",
+    priority: 'medium' as const,
+    category: 'health',
+    difficulty: 'medium' as const,
+    tags: ['fitness', 'health', 'weekly'],
+    subtasks: [
+      "Monday: Cardio workout (30 min)",
+      "Tuesday: Upper body strength training",
+      "Wednesday: Rest day or light yoga",
+      "Thursday: Lower body strength training",
+      "Friday: Cardio workout (30 min)",
+      "Saturday: Full body workout",
+      "Sunday: Rest and recovery"
+    ]
+  },
+  shoppingList: {
+    title: "Weekly Grocery Shopping",
+    description: "Essential items for the week",
+    priority: 'low' as const,
+    category: 'shopping',
+    difficulty: 'easy' as const,
+    tags: ['grocery', 'weekly', 'essentials'],
+    subtasks: [
+      "Fresh fruits and vegetables",
+      "Dairy products (milk, yogurt, cheese)",
+      "Protein sources (meat, fish, eggs)",
+      "Pantry staples (rice, pasta, bread)",
+      "Snacks and beverages",
+      "Cleaning supplies",
+      "Personal care items"
+    ]
+  },
+  studySession: {
+    title: "Study Session Plan",
+    description: "Structured learning and review session",
+    priority: 'high' as const,
+    category: 'learning',
+    difficulty: 'medium' as const,
+    tags: ['study', 'learning', 'academic'],
+    subtasks: [
+      "Review previous lesson notes",
+      "Read new chapter/material",
+      "Take detailed notes",
+      "Practice exercises",
+      "Create summary/flashcards",
+      "Test understanding with quiz",
+      "Plan next study session"
+    ]
+  },
+  homeCleanup: {
+    title: "Weekend House Cleanup",
+    description: "Deep cleaning and organizing your living space",
+    priority: 'medium' as const,
+    category: 'personal',
+    difficulty: 'medium' as const,
+    tags: ['cleaning', 'organizing', 'weekend'],
+    subtasks: [
+      "Declutter and organize living room",
+      "Clean kitchen and appliances",
+      "Bathroom deep clean",
+      "Vacuum and mop floors",
+      "Dust furniture and surfaces",
+      "Laundry and folding clothes",
+      "Take out trash and recycling"
+    ]
+  }
+};
+
 export default function TaskForm({ onSubmit, initialData, isLoading = false, isEdit = false }: UpdatedTaskFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -41,11 +146,13 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
   const [dueDate, setDueDate] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-  const [estimatedTime, setEstimatedTime] = useState<number>(0);
+
   const [notes, setNotes] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringPattern, setRecurringPattern] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [tagInput, setTagInput] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [showTemplates, setShowTemplates] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -56,7 +163,7 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
       setDueDate(initialData.dueDate || '');
       setTags(initialData.tags || []);
       setDifficulty(initialData.difficulty || 'medium');
-      setEstimatedTime(initialData.estimatedTime || 0);
+
       setNotes(initialData.notes || '');
       setIsRecurring(initialData.isRecurring || false);
       setRecurringPattern(initialData.recurringPattern || 'daily');
@@ -77,7 +184,7 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim() && description.trim()) {
-      onSubmit({ 
+      const taskData = { 
         title: title.trim(), 
         description: description.trim(),
         priority,
@@ -85,11 +192,21 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
         dueDate: dueDate || undefined,
         tags,
         difficulty,
-        estimatedTime: estimatedTime > 0 ? estimatedTime : undefined,
         notes: notes.trim() || undefined,
         isRecurring,
         recurringPattern: isRecurring ? recurringPattern : undefined
-      });
+      };
+
+      // Add subtasks from template if a template was selected
+      if (selectedTemplate && !isEdit) {
+        const template = TASK_TEMPLATES[selectedTemplate as keyof typeof TASK_TEMPLATES];
+        if (template) {
+          (taskData as any).templateSubtasks = template.subtasks;
+        }
+      }
+
+      onSubmit(taskData);
+      
       if (!isEdit) {
         setTitle('');
         setDescription('');
@@ -98,12 +215,40 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
         setDueDate('');
         setTags([]);
         setDifficulty('medium');
-        setEstimatedTime(0);
         setNotes('');
         setIsRecurring(false);
         setRecurringPattern('daily');
+        setSelectedTemplate('');
       }
     }
+  };
+
+  const applyTemplate = (templateKey: string) => {
+    const template = TASK_TEMPLATES[templateKey as keyof typeof TASK_TEMPLATES];
+    if (template) {
+      setTitle(template.title);
+      setDescription(template.description);
+      setPriority(template.priority);
+      setCategory(template.category);
+      setDifficulty(template.difficulty);
+      setTags(template.tags);
+      setSelectedTemplate(templateKey);
+      setShowTemplates(false);
+    }
+  };
+
+  const clearForm = () => {
+    setTitle('');
+    setDescription('');
+    setPriority('medium');
+    setCategory('general');
+    setDifficulty('medium');
+    setTags([]);
+    setDueDate('');
+    setNotes('');
+    setIsRecurring(false);
+    setRecurringPattern('daily');
+    setSelectedTemplate('');
   };
 
   return (
@@ -117,10 +262,119 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
         fontSize: '1.8rem',
         textAlign: 'center'
       }}>
-        {isEdit ? '✏️ Edit Task' : '➕ Add New Task'}
+        {isEdit ? '✎ Edit Task' : '+ Add New Task'}
       </h2>
       
       <form onSubmit={handleSubmit} className="form">
+        {/* Template Selection */}
+        {!isEdit && (
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <label className="form-label">
+                ☰ Quick Templates
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowTemplates(!showTemplates)}
+                  className="btn-modern"
+                  style={{ 
+                    padding: '0.4rem 0.8rem',
+                    fontSize: '0.8rem',
+                    background: showTemplates ? 'var(--primary-gradient)' : 'rgba(102, 126, 234, 0.1)',
+                    minWidth: 'auto'
+                  }}
+                >
+                  {showTemplates ? 'Hide Templates' : 'Show Templates'}
+                </button>
+                {(title || description) && (
+                  <button
+                    type="button"
+                    onClick={clearForm}
+                    className="btn-modern"
+                    style={{ 
+                      padding: '0.4rem 0.8rem',
+                      fontSize: '0.8rem',
+                      background: 'rgba(231, 76, 60, 0.1)',
+                      color: '#e74c3c',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Clear Form
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {showTemplates && (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '1rem',
+                padding: '1rem',
+                background: 'rgba(102, 126, 234, 0.05)',
+                borderRadius: '12px',
+                border: '1px solid rgba(102, 126, 234, 0.1)'
+              }}>
+                {Object.entries(TASK_TEMPLATES).map(([key, template]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyTemplate(key)}
+                    className="template-card"
+                    style={{
+                      padding: '1rem',
+                      background: selectedTemplate === key 
+                        ? 'rgba(102, 126, 234, 0.2)' 
+                        : 'rgba(255, 255, 255, 0.08)',
+                      border: selectedTemplate === key
+                        ? '2px solid rgba(102, 126, 234, 0.5)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                      {template.title}
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.8rem', 
+                      color: 'var(--text-secondary)',
+                      marginBottom: '0.5rem',
+                      lineHeight: '1.4'
+                    }}>
+                      {template.description}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                      {template.tags.slice(0, 3).map((tag, index) => (
+                        <span
+                          key={index}
+                          style={{
+                            fontSize: '0.7rem',
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '8px',
+                            background: 'rgba(102, 126, 234, 0.1)',
+                            color: 'rgba(102, 126, 234, 0.8)'
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        +{template.subtasks.length} steps
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Existing form fields */}
         <div className="form-group">
           <label htmlFor="title" className="form-label">
             Task Title
@@ -223,21 +477,7 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
             />
           </div>
 
-          <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
-            <label htmlFor="estimatedTime" className="form-label">
-              ⏱️ Estimated Time (Minutes)
-            </label>
-            <input
-              type="number"
-              id="estimatedTime"
-              value={estimatedTime}
-              onChange={(e) => setEstimatedTime(Number(e.target.value))}
-              className="form-input"
-              placeholder="0"
-              min="0"
-              disabled={isLoading}
-            />
-          </div>
+
         </div>
 
         {/* Tags Section */}

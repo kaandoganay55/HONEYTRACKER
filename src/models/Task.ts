@@ -89,10 +89,7 @@ const TaskSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
-  estimatedTime: {
-    type: Number,
-    default: 0, // estimated minutes to complete
-  },
+
   difficulty: {
     type: String,
     enum: ['easy', 'medium', 'hard'],

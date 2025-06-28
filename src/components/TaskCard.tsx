@@ -3,6 +3,23 @@
 import { useState } from 'react';
 import { Task, Subtask } from '@/types/task';
 import PomodoroTimer from './PomodoroTimer';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface TaskCardProps {
   task: Task;
@@ -17,6 +34,33 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [activeSubtask, setActiveSubtask] = useState<Subtask | null>(null);
+  const [activeSubtaskId, setActiveSubtaskId] = useState<string | null>(null);
+
+  // Drag and Drop setup
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task._id });
+
+  // Subtask drag and drop sensors
+  const subtaskSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 1,
+  };
 
   const handleToggleStatus = () => {
     let newStatus: 'pending' | 'in-progress' | 'completed';
@@ -109,6 +153,50 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
       }
     } catch (error) {
       console.error('Error deleting subtask:', error);
+    }
+  };
+
+  // Subtask drag and drop handlers
+  const handleSubtaskDragStart = (event: DragStartEvent) => {
+    setActiveSubtaskId(event.active.id as string);
+    const subtask = task.subtasks?.find(s => s._id === event.active.id);
+    setActiveSubtask(subtask || null);
+  };
+
+  const handleSubtaskDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveSubtaskId(null);
+    setActiveSubtask(null);
+
+    if (!over || active.id === over.id || !task.subtasks) {
+      return;
+    }
+
+    const oldIndex = task.subtasks.findIndex(subtask => subtask._id === active.id);
+    const newIndex = task.subtasks.findIndex(subtask => subtask._id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedSubtasks = arrayMove(task.subtasks, oldIndex, newIndex).map((subtask, index) => ({
+      ...subtask,
+      order: index
+    }));
+
+    try {
+      const response = await fetch(`/api/tasks/${task._id}/subtasks`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ subtasks: reorderedSubtasks }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        onUpdateTask(data.task);
+      }
+    } catch (error) {
+      console.error('Error reordering subtasks:', error);
     }
   };
 
@@ -215,9 +303,86 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
     }
   };
 
+  // Sortable Subtask Component
+  function SortableSubtask({ 
+    subtask, 
+    onToggle, 
+    onDelete, 
+    onStartPomodoro 
+  }: { 
+    subtask: Subtask;
+    onToggle: (id: string) => void;
+    onDelete: (id: string) => void;
+    onStartPomodoro: (subtask: Subtask) => void;
+  }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: subtask._id || '' });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <li
+        ref={setNodeRef}
+        style={style}
+        className={`subtask-item ${subtask.completed ? 'completed' : ''} ${isDragging ? 'dragging' : ''}`}
+      >
+        <div
+          {...attributes}
+          {...listeners}
+          className="subtask-drag-handle"
+          style={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            padding: '0.2rem',
+            marginRight: '0.5rem',
+            color: 'rgba(102, 126, 234, 0.6)',
+            fontSize: '0.9rem',
+            touchAction: 'none',
+          }}
+          title="Drag to reorder"
+        >
+          ≡
+        </div>
+        
+        <div
+          className={`subtask-checkbox ${subtask.completed ? 'checked' : ''}`}
+          onClick={() => onToggle(subtask._id!)}
+        />
+        <span className="subtask-text">{subtask.title}</span>
+        <div className="subtask-actions">
+          <button
+            onClick={() => onStartPomodoro(subtask)}
+            className="subtask-action-btn pomodoro-btn"
+          >
+            🍅
+          </button>
+          <button
+            onClick={() => onDelete(subtask._id!)}
+            className="subtask-action-btn delete-subtask-btn"
+          >
+            🗑️
+          </button>
+        </div>
+      </li>
+    );
+  }
+
   return (
     <>
-      <div className={`task-card ${task.status === 'completed' ? 'completed' : ''}`}>
+      <div 
+        ref={setNodeRef}
+        style={style}
+        className={`task-card ${task.status === 'completed' ? 'completed' : ''} ${isDragging ? 'dragging' : ''}`}
+      >
         {/* Priority indicator */}
         <div 
           className="priority-indicator"
@@ -233,6 +398,32 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
         />
 
         <div className="task-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          {/* Drag Handle */}
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="drag-handle"
+            style={{
+              cursor: isDragging ? 'grabbing' : 'grab',
+              padding: '0.5rem',
+              marginRight: '0.5rem',
+              borderRadius: '8px',
+              background: 'rgba(102, 126, 234, 0.1)',
+              color: 'rgba(102, 126, 234, 0.8)',
+              fontSize: '1.2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              height: '40px',
+              transition: 'all 0.2s ease',
+              touchAction: 'none', // Important for mobile
+            }}
+            title="Drag to reorder"
+          >
+            ≡
+          </div>
+          
           <div style={{ flex: 1 }}>
             <div className="task-title">{task.title}</div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
@@ -330,16 +521,7 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
               🍅 Focus
             </button>
             
-            {/* Estimated Time */}
-            {task.estimatedTime && task.estimatedTime > 0 && (
-              <span style={{
-                fontSize: '0.7rem',
-                color: 'var(--text-secondary)',
-                opacity: 0.8
-              }}>
-                ⏱️ ~{task.estimatedTime}min
-              </span>
-            )}
+
           </div>
         </div>
 
@@ -429,37 +611,50 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
               </div>
 
               {/* Subtasks list */}
-              <ul className="subtasks-list">
-                {(task.subtasks || []).map((subtask) => (
-                  <li
-                    key={subtask._id}
-                    className={`subtask-item ${subtask.completed ? 'completed' : ''}`}
-                  >
-                    <div
-                      className={`subtask-checkbox ${subtask.completed ? 'checked' : ''}`}
-                      onClick={() => handleToggleSubtask(subtask._id!)}
-                    />
-                    <span className="subtask-text">{subtask.title}</span>
-                    <div className="subtask-actions">
-                      <button
-                        onClick={() => {
+              <DndContext
+                sensors={subtaskSensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleSubtaskDragStart}
+                onDragEnd={handleSubtaskDragEnd}
+              >
+                <SortableContext
+                  items={(task.subtasks || []).map(s => s._id || '')}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="subtasks-list">
+                    {(task.subtasks || []).map((subtask) => (
+                      <SortableSubtask
+                        key={subtask._id}
+                        subtask={subtask}
+                        onToggle={handleToggleSubtask}
+                        onDelete={handleDeleteSubtask}
+                        onStartPomodoro={(subtask) => {
                           setActiveSubtask(subtask);
                           setShowPomodoro(true);
                         }}
-                        className="subtask-action-btn pomodoro-btn"
-                      >
-                        🍅
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSubtask(subtask._id!)}
-                        className="subtask-action-btn delete-subtask-btn"
-                      >
-                        🗑️
-                      </button>
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+                
+                {/* Subtask Drag Overlay */}
+                <DragOverlay>
+                  {activeSubtaskId && activeSubtask ? (
+                    <div style={{
+                      opacity: 0.8,
+                      transform: 'rotate(3deg)',
+                      cursor: 'grabbing'
+                    }}>
+                      <SortableSubtask
+                        subtask={activeSubtask}
+                        onToggle={() => {}}
+                        onDelete={() => {}}
+                        onStartPomodoro={() => {}}
+                      />
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </div>
           )}
         </div>
