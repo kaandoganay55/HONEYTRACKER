@@ -23,8 +23,36 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
+    return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                    var theme = localStorage.getItem('theme');
+                    if (theme === 'light' || theme === 'dark') {
+                      document.documentElement.setAttribute('data-theme', theme);
+                    } else {
+                      // Default to light mode
+                      document.documentElement.setAttribute('data-theme', 'light');
+                      localStorage.setItem('theme', 'light');
+                    }
+                  } else {
+                    // Fallback for SSR
+                    document.documentElement.setAttribute('data-theme', 'light');
+                  }
+                } catch (e) {
+                  // Fallback on any error
+                  document.documentElement.setAttribute('data-theme', 'light');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

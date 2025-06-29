@@ -12,6 +12,33 @@
   --shadow-hover: 0 12px 40px rgba(31, 38, 135, 0.5);
 }
 
+/* Light mode variables - Pembe Tema */
+[data-theme="light"] {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --shadow-hover: 0 12px 40px rgba(31, 38, 135, 0.5);
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+  --primary-gradient: linear-gradient(135deg, #4c6ef5 0%, #339af0 100%);
+  --secondary-gradient: linear-gradient(135deg, #845ef7 0%, #7c3aed 100%);
+  --accent-gradient: linear-gradient(135deg, #15aabf 0%, #0ea5e9 100%);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(148, 163, 184, 0.2);
+  --text-primary: rgba(248, 250, 252, 0.95);
+  --text-secondary: rgba(203, 213, 225, 0.8);
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --bg-overlay: rgba(15, 23, 42, 0.8);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -33,6 +60,23 @@ body {
   min-height: 100vh;
   color: var(--text-primary);
   overflow-x: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Light mode body - Pembe Tema (default) */
+[data-theme="light"] body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: var(--text-primary);
+}
+
+/* Dark mode body - Koyu Tema */
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: var(--text-primary);
 }
 
 @keyframes gradientShift {
@@ -56,6 +100,23 @@ body::before {
   background-size: 100px 100px, 150px 150px, 80px 80px;
   animation: float 20s ease-in-out infinite;
   z-index: -1;
+  transition: all 0.3s ease;
+}
+
+/* Light mode particles - Pembe tema için beyaz partiküller */
+[data-theme="light"] body::before {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+}
+
+/* Dark mode particles - Koyu tema için gri partiküller */
+[data-theme="dark"] body::before {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(148, 163, 184, 0.15) 2px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
 }
 
 @keyframes float {
@@ -1023,6 +1084,7 @@ body::before {
 @media (max-width: 768px) {
   .navbar {
     padding: 1rem;
+    flex-wrap: wrap;
   }
   
   .navbar-brand {
@@ -1030,7 +1092,18 @@ body::before {
   }
   
   .navbar-nav {
-    gap: 1rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  
+  .theme-switcher {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    min-width: auto;
+  }
+  
+  .theme-switcher .icon {
+    font-size: 1rem;
   }
   
   .main-content {
@@ -1353,6 +1426,232 @@ button .emoji,
   font-size: 0.8em;
   color: #667eea;
   font-weight: bold;
+}
+
+/* Theme Switcher Button */
+.theme-switcher {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 0.6rem 1.2rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.theme-switcher:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.theme-switcher .icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.theme-switcher:hover .icon {
+  transform: rotate(180deg);
+}
+
+/* Light mode theme switcher - Pembe tema */
+[data-theme="light"] .theme-switcher {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .theme-switcher:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode task cards - Pembe tema için glass effect */
+[data-theme="light"] .task-card {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="light"] .task-card:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(102, 126, 234, 0.4) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="light"] .task-card h3 {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="light"] .task-card p,
+[data-theme="light"] .task-card div,
+[data-theme="light"] .task-card span {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="light"] .task-card .task-description {
+  color: rgba(255, 255, 255, 0.85) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="light"] .subtasks-list {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="light"] .subtask-item {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .subtask-item:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .subtask-text {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="light"] .progress-text {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="light"] .task-card .btn-modern {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="light"] .task-card .btn-modern:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Light mode navbar - Pembe tema */
+[data-theme="light"] .navbar {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Light mode glass cards - Pembe tema */
+[data-theme="light"] .glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Dark mode task cards */
+[data-theme="dark"] .task-card {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .task-card:hover {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border-color: rgba(76, 110, 245, 0.4) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .task-card h3 {
+  color: var(--text-primary) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .task-card p,
+[data-theme="dark"] .task-card div,
+[data-theme="dark"] .task-card span {
+  color: var(--text-secondary) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .task-card .task-description {
+  color: var(--text-secondary) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .subtasks-list {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+[data-theme="dark"] .subtask-item {
+  background: rgba(30, 41, 59, 0.8) !important;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+[data-theme="dark"] .subtask-item:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme="dark"] .subtask-text {
+  color: var(--text-primary) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .progress-text {
+  color: var(--text-secondary) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .task-card .btn-modern {
+  background: rgba(76, 110, 245, 0.2) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(76, 110, 245, 0.3) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .task-card .btn-modern:hover {
+  background: rgba(76, 110, 245, 0.3) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(76, 110, 245, 0.5) !important;
+}
+
+/* Dark mode navbar */
+[data-theme="dark"] .navbar {
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Dark mode glass cards */
+[data-theme="dark"] .glass-card {
+  background: var(--glass-bg);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode theme switcher */
+[data-theme="dark"] .theme-switcher {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .theme-switcher:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(148, 163, 184, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Force font weights for better visibility */

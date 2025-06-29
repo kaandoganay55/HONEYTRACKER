@@ -2,9 +2,11 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { useTheme } from '@/lib/useTheme';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const { theme, toggleTheme, mounted } = useTheme();
 
   return (
     <nav className="navbar">
@@ -13,6 +15,19 @@ export default function Navbar() {
       </Link>
       
       <div className="navbar-nav">
+        {mounted && (
+          <button
+            onClick={toggleTheme}
+            className="theme-switcher"
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            <span className="icon">
+              {theme === 'light' ? '🌙' : '☀️'}
+            </span>
+            {theme === 'light' ? 'Dark' : 'Light'}
+          </button>
+        )}
+        
         {status === 'loading' ? (
           <span>Loading...</span>
         ) : session ? (
