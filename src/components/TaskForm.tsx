@@ -231,11 +231,17 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
       setPriority(template.priority);
       setCategory(template.category);
       setDifficulty(template.difficulty);
-      setTags(template.tags);
+      setTags([...template.tags]);
       setSelectedTemplate(templateKey);
-      setShowTemplates(false);
     }
   };
+
+  const getSelectedTemplate = () => {
+    if (!selectedTemplate) return null;
+    return TASK_TEMPLATES[selectedTemplate as keyof typeof TASK_TEMPLATES];
+  };
+
+  const selectedTemplateData = getSelectedTemplate();
 
   const clearForm = () => {
     setTitle('');
@@ -306,6 +312,80 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
               </div>
             </div>
             
+            {/* Selected Template Preview */}
+            {selectedTemplateData && (
+              <div style={{
+                background: 'rgba(102, 126, 234, 0.1)',
+                border: '2px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '12px',
+                padding: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '0.8rem'
+                }}>
+                  <h4 style={{ 
+                    color: 'var(--text-primary)', 
+                    margin: 0,
+                    fontSize: '1rem'
+                  }}>
+                    ✓ Template Selected: {selectedTemplateData.title}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTemplate('');
+                      clearForm();
+                    }}
+                    style={{
+                      background: 'rgba(231, 76, 60, 0.1)',
+                      color: '#e74c3c',
+                      border: '1px solid rgba(231, 76, 60, 0.3)',
+                      borderRadius: '6px',
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p style={{ 
+                  color: 'var(--text-secondary)', 
+                  margin: '0 0 0.8rem 0',
+                  fontSize: '0.9rem'
+                }}>
+                  This template will create <strong>{selectedTemplateData.subtasks.length} subtasks</strong> automatically when you submit.
+                </p>
+                <div style={{ 
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  padding: '0.8rem',
+                  maxHeight: '150px',
+                  overflowY: 'auto'
+                }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    <strong>Subtasks that will be created:</strong>
+                  </div>
+                  <ul style={{ 
+                    margin: 0, 
+                    paddingLeft: '1.2rem',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.8rem'
+                  }}>
+                    {selectedTemplateData.subtasks.map((subtask, index) => (
+                      <li key={index} style={{ marginBottom: '0.3rem' }}>
+                        {subtask}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+            
             {showTemplates && (
               <div style={{ 
                 display: 'grid', 
@@ -325,10 +405,10 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
                     style={{
                       padding: '1rem',
                       background: selectedTemplate === key 
-                        ? 'rgba(102, 126, 234, 0.2)' 
+                        ? 'rgba(102, 126, 234, 0.25)' 
                         : 'rgba(255, 255, 255, 0.08)',
                       border: selectedTemplate === key
-                        ? '2px solid rgba(102, 126, 234, 0.5)'
+                        ? '2px solid rgba(102, 126, 234, 0.6)'
                         : '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '12px',
                       textAlign: 'left',
@@ -338,7 +418,7 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
                     }}
                   >
                     <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-                      {template.title}
+                      {selectedTemplate === key ? '✓ ' : ''}{template.title}
                     </div>
                     <div style={{ 
                       fontSize: '0.8rem', 
@@ -363,8 +443,12 @@ export default function TaskForm({ onSubmit, initialData, isLoading = false, isE
                           {tag}
                         </span>
                       ))}
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                        +{template.subtasks.length} steps
+                      <span style={{ 
+                        fontSize: '0.7rem', 
+                        color: selectedTemplate === key ? '#667eea' : 'var(--text-secondary)',
+                        fontWeight: selectedTemplate === key ? 'bold' : 'normal'
+                      }}>
+                        ▦ {template.subtasks.length} steps
                       </span>
                     </div>
                   </button>

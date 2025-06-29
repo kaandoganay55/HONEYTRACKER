@@ -16,6 +16,9 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 html {
@@ -23,7 +26,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
@@ -411,31 +414,74 @@ body::before {
 }
 
 .task-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 20px;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-soft);
-  padding: 2rem;
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-}
-
-.task-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: var(--primary-gradient);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
 }
 
 .task-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-hover);
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(102, 126, 234, 0.4) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Task card text improvements */
+.task-card h3 {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.task-card p,
+.task-card div,
+.task-card span {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.task-card .task-description {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Progress bar more visible */
+.progress-bar {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #667eea, #764ba2) !important;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+/* Subtask list more visible */
+.subtasks-list {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .task-card.completed {
@@ -816,65 +862,33 @@ body::before {
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-.subtasks-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
 .subtask-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.2rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  border-radius: 16px;
-  transition: all 0.4s ease;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-}
-
-.subtask-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--primary-gradient);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-}
-
-.subtask-item:hover::before {
-  transform: scaleY(1);
+  transition: all 0.3s ease;
 }
 
 .subtask-item:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(224, 85, 196, 0.1));
-  transform: translateX(8px) translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.3);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
-.subtask-item.completed {
-  background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(39, 174, 96, 0.05));
-  border-color: rgba(46, 204, 113, 0.3);
+.subtask-text {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  flex: 1;
 }
 
 .subtask-item.completed .subtask-text {
+  color: rgba(255, 255, 255, 0.6) !important;
   text-decoration: line-through;
-  color: var(--text-secondary);
-}
-
-.subtask-item.completed::before {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-  transform: scaleY(1);
 }
 
 .subtask-checkbox {
@@ -924,19 +938,6 @@ body::before {
   100% { opacity: 1; transform: scale(1); }
 }
 
-.subtask-text {
-  flex: 1;
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.5;
-  transition: all 0.3s ease;
-}
-
-.subtask-item:hover .subtask-text {
-  color: rgba(102, 126, 234, 1);
-}
-
 .subtask-actions {
   display: flex;
   gap: 0.6rem;
@@ -951,39 +952,17 @@ body::before {
 }
 
 .subtask-action-btn {
-  padding: 0.6rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-.subtask-action-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.1);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.subtask-action-btn:hover::before {
-  opacity: 1;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 .subtask-action-btn:hover {
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
 }
 
 .pomodoro-btn {
@@ -1031,22 +1010,6 @@ body::before {
   border-color: rgba(102, 126, 234, 0.6);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 8px 25px rgba(102, 126, 234, 0.2);
   transform: translateY(-2px);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 1rem 0;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--primary-gradient);
-  border-radius: 4px;
-  transition: width 0.3s ease;
 }
 
 .progress-text {
@@ -1249,4 +1212,198 @@ body::before {
   .template-card > div:nth-child(2) {
     font-size: 0.75rem !important;
   }
+}
+
+/* Enhanced badge visibility */
+.task-card .badge {
+  font-weight: 800 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 0.3rem 0.8rem !important;
+  border-radius: 12px !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Status badges with higher contrast */
+.task-card .status-completed {
+  background: rgba(46, 204, 113, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(46, 204, 113, 0.5) !important;
+}
+
+.task-card .status-in-progress {
+  background: rgba(255, 193, 7, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 193, 7, 0.5) !important;
+}
+
+.task-card .status-pending {
+  background: rgba(108, 117, 125, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(108, 117, 125, 0.5) !important;
+}
+
+/* Priority badges with higher contrast */
+.task-card .priority-high {
+  background: rgba(220, 53, 69, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(220, 53, 69, 0.5) !important;
+}
+
+.task-card .priority-medium {
+  background: rgba(255, 193, 7, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 193, 7, 0.5) !important;
+}
+
+.task-card .priority-low {
+  background: rgba(40, 167, 69, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(40, 167, 69, 0.5) !important;
+}
+
+/* Category and tag badges */
+.task-card .category-badge {
+  background: rgba(102, 126, 234, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  border-color: rgba(102, 126, 234, 0.4) !important;
+}
+
+.task-card .tag-badge {
+  background: rgba(156, 163, 235, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  border-color: rgba(156, 163, 235, 0.4) !important;
+}
+
+/* Difficulty badges */
+.task-card .difficulty-easy {
+  background: rgba(40, 167, 69, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(40, 167, 69, 0.5) !important;
+}
+
+.task-card .difficulty-medium {
+  background: rgba(255, 193, 7, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 193, 7, 0.5) !important;
+}
+
+.task-card .difficulty-hard {
+  background: rgba(220, 53, 69, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(220, 53, 69, 0.5) !important;
+}
+
+/* Emoji and icon fallback fonts */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+}
+
+/* Better emoji rendering */
+.emoji, .icon {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', 'EmojiSymbols', 'EmojiOne Mozilla', 'Twemoji Mozilla', 'Segoe UI Symbol', sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+}
+
+/* Ensure all emojis and icons in components are visible */
+button .emoji,
+.template-card .emoji,
+.task-card .emoji,
+.subtask-item .emoji {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+  font-size: 1em !important;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Fallback for missing emojis */
+.fallback-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background: rgba(102, 126, 234, 0.2);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 1em;
+  font-size: 0.8em;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* Force font weights for better visibility */
+.task-card, .subtask-item, .template-card {
+  -webkit-text-stroke: 0.2px rgba(255, 255, 255, 0.1);
+}
+
+/* Task buttons more visible */
+.task-card .btn-modern {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.task-card .btn-modern:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Progress text more visible */
+.progress-text {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Task meta info more visible */
+.task-card .task-meta {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Due date badges */
+.due-date-badge {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Overdue badge */
+.due-date-badge.overdue {
+  background: rgba(220, 53, 69, 0.3) !important;
+  color: #ffffff !important;
+  border-color: rgba(220, 53, 69, 0.5) !important;
+  font-weight: 800 !important;
 }

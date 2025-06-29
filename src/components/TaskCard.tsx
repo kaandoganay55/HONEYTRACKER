@@ -363,13 +363,13 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
             onClick={() => onStartPomodoro(subtask)}
             className="subtask-action-btn pomodoro-btn"
           >
-            🍅
+            T
           </button>
           <button
             onClick={() => onDelete(subtask._id!)}
             className="subtask-action-btn delete-subtask-btn"
           >
-            🗑️
+            ×
           </button>
         </div>
       </li>
@@ -713,26 +713,14 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus, onUpd
 
       {/* Pomodoro Timer Modal */}
       {showPomodoro && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(5px)',
-          zIndex: 999
-        }}>
-          <PomodoroTimer
-            task={task}
-            subtask={activeSubtask || undefined}
-            onSessionComplete={handlePomodoroComplete}
-            onClose={() => {
-              setShowPomodoro(false);
-              setActiveSubtask(null);
-            }}
-          />
-        </div>
+        <PomodoroTimer
+          taskTitle={activeSubtask ? `${task.title} → ${activeSubtask.title}` : task.title}
+          onComplete={handlePomodoroComplete}
+          onClose={() => {
+            setShowPomodoro(false);
+            setActiveSubtask(null);
+          }}
+        />
       )}
     </>
   );

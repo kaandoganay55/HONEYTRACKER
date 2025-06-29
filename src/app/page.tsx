@@ -613,7 +613,7 @@ export default function HomePage() {
                   >
                     Clear All Filters
                   </button>
-                </div>
+        </div>
               ) : (
                 <DndContext
                   sensors={sensors}
@@ -667,7 +667,7 @@ export default function HomePage() {
             </div>
           </div>
         )}
-      </div>
+    </div>
     </>
   );
 }
